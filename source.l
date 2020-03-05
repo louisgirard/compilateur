@@ -2,6 +2,7 @@
 "int" printf("type_int");
 "const" printf("constante");
 "main" printf("un_main");
+"return" printf("retour");
 "+" printf("add");
 "-" printf("sub");
 "/" printf("div");
@@ -19,7 +20,6 @@
 [\t]+ printf("tab");
 "," printf("vir");
 [\n]+ printf("rchar\n");
-"return" printf("retour");
 
 %%
 int yywrap(void){}
