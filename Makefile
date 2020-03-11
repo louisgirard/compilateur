@@ -5,4 +5,5 @@ y.tab.c: source.y
 	yacc -d source.y
 lex.yy.c: source.l
 	lex source.l
-
+clean: 
+	rm lex.yy.* y.tab.* comp

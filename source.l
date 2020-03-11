@@ -1,3 +1,6 @@
+%{
+#include "y.tab.h"
+%}
 %%
 "int" return tINT;
 "const" return tCONST;
@@ -9,23 +12,18 @@
 "*" return tMUL;
 "%" return tMOD;
 "=" return tAFF;
-"{" return tPO;
-"}" return tPF;
-"(" return tAO;
-")" return tAF;
-"printf" return tPRINTF
+"{" return tAO;
+"}" return tAF;
+"(" return tPO;
+")" return tPF;
+"printf" return tPRINTF;
 [0-9]+ return tNBR;
-[a-zA-Z][a-zA-Z0-9_]+ printf("var");
-";" printf("pv");
-"," printf("vir");
+[a-zA-Z][a-zA-Z0-9_]+ return tVAR;
+";" return tPV;
+"," return tV;
 [ ]+ ;
 [\t]+ ;
 [\n]+ ;
 
 %%
 int yywrap(void){}
-
-/*int main(void){
-	yylex();
-	return 0;
-}*/
