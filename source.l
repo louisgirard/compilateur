@@ -1,6 +1,7 @@
 %{
 #include "y.tab.h"
 %}
+
 %%
 "int" return tINT;
 "const" return tCONST;
@@ -18,12 +19,12 @@
 ")" return tPF;
 "printf" return tPRINTF;
 [0-9]+ return tNBR;
-[a-zA-Z][a-zA-Z0-9_]+ return tVAR;
+[a-zA-Z][a-zA-Z0-9_]* return tVAR;
 ";" return tPV;
 "," return tV;
 [ ]+ ;
 [\t]+ ;
 [\n]+ ;
-
 %%
 int yywrap(void){}
+

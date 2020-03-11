@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
-
+int yylex();
+int yyerror(char *s);
 %}
 
 %token tMAIN tINT tCONST tRET 
@@ -15,23 +16,48 @@
 %left tADD tSUB
 %left tDIV tMUL tMOD
 
+%start start
+
 %%
-expr : expr tAFF expr
-| expr tADD expr
-| expr tSUB expr
-| expr tMUL expr
-| expr tDIV expr
-| expr tMOD expr
+
+start: tINT tMAIN tPO tPF tAO body tAF
+;
+
+body: ligne tPV body 
+| ligne tPV
+;
+
+ligne: expr
+|tINT declaration {printf("declaration\n");}
+|print {printf("print\n");}
+| tRET tNBR {printf("retour\n");}
+;
+
+declaration: tVAR tV declaration
+|tVAR
+;
+
+expr: tPO expr tPF
+| expr tAFF expr {printf("affectation\n");}
+| expr tADD expr {printf("addition\n");}
+| expr tSUB expr {printf("soustraction\n");}
+| expr tMUL expr {printf("multiplication\n");}
+| expr tDIV expr {printf("division\n");}
+| expr tMOD expr {printf("modulo\n");}
 | tNBR
-| tVAR
+| tVAR 
+;
+
+print: tPRINTF tPO tVAR tPF
 ;
 
 %%
-main()
+int main()
 {
  return(yyparse());
 }
-yyerror(char *s)
+int yyerror(char *s)
 {
 fprintf(stderr, "%s\n", s) ;
+return 0;
 }
