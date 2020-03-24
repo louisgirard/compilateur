@@ -4,12 +4,17 @@ int yylex();
 int yyerror(char *s);
 %}
 
+%union {
+	int nb;
+	char* var;
+}
+
 %token tMAIN tINT tCONST tRET 
 %token tADD tSUB tDIV tMUL tMOD tAFF
 %token tPO tPF tAO tAF
 %token tPRINTF
-%token tNBR
-%token tVAR
+%token <nb> tNBR
+%token <var> tVAR
 %token tV tPV
 
 %right tAFF
@@ -17,6 +22,12 @@ int yyerror(char *s);
 %left tDIV tMUL tMOD
 
 %start start
+
+/* tableau de constantes et variables declarees:
+ var/const, identifiant, adresse = ligne dans le tableau, int / float,
+ fonction pour recuperer l' adresse(ligne)
+ %type pour les regles qui retournent une valeur 
+*/
 
 %%
 
@@ -30,15 +41,18 @@ body: ligne tPV body
 ligne: expr
 |tINT declaration {printf("declaration\n");}
 |print {printf("print\n");}
-| tRET tNBR {printf("retour\n");}
+|affectation {printf("affectation\n");}
+|tRET tNBR {printf("retour\n");}
 ;
 
 declaration: tVAR tV declaration
 |tVAR
 ;
 
+affectation: tVAR tAFF expr 
+;
+
 expr: tPO expr tPF
-| expr tAFF expr {printf("affectation\n");}
 | expr tADD expr {printf("addition\n");}
 | expr tSUB expr {printf("soustraction\n");}
 | expr tMUL expr {printf("multiplication\n");}
