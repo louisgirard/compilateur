@@ -6,4 +6,4 @@ y.tab.c: source.y
 lex.yy.c: source.l
 	lex source.l
 clean: 
-	rm lex.yy.* y.tab.* comp
+	rm lex.yy.* y.tab.* comp test.asm

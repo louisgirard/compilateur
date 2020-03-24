@@ -48,6 +48,8 @@ void free_temp(){
 	pointeur_var_temp = TAB_SIZE - 1;
 }
 
+FILE* asmFile;
+
 %}
 
 %union {
@@ -80,7 +82,7 @@ compteur pour les variables temporaires, penser a liberer la memoire !!!
 
 %%
 
-start: tINT tMAIN tPO tPF tAO body tAF
+start: tINT tMAIN tPO tPF tAO body tAF {fclose(asmFile);}
 ;
 
 body: ligne tPV body 
@@ -100,7 +102,7 @@ declaration: tVAR tV declaration {add_var($1);}
 
 affectation: tVAR tAFF expr 
 	{int a = get_var($1);
-	printf("COP %d %d\n", a, $3);
+	fprintf(asmFile,"COP %d %d\n", a, $3);
 	free_temp(); // liberation des variables temporaires apres leur utilisation
 	}
 ;
@@ -109,7 +111,7 @@ expr: tPO expr tPF {$$ = $2;}
 | expr tADD expr 
 	{add_temp();
 	int a = get_temp();
-	printf("ADD %d %d %d\n", a, $1, $3);
+	fprintf(asmFile,"ADD %d %d %d\n", a, $1, $3);
 	$$ = a;
 	}
 | expr tSUB expr {printf("soustraction\n");}
@@ -119,7 +121,7 @@ expr: tPO expr tPF {$$ = $2;}
 | tNBR 
 	{add_temp();
 	int a = get_temp();
-	printf("AFC %d %d\n", a, $1);
+	fprintf(asmFile,"AFC %d %d\n", a, $1);
 	$$ = a;
 	}
 | tVAR 
@@ -137,6 +139,7 @@ print: tPRINTF tPO tVAR tPF
 %%
 int main()
 {
+asmFile = fopen("test.asm","w");
  return(yyparse());
 }
 int yyerror(char *s)
