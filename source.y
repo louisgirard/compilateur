@@ -32,6 +32,12 @@ void add_var(char* name){ //ajoute une variable dans la table des symboles
 	current_address++;
 }
 
+void add_const(char* name){ //ajoute une constante dans la table des symboles
+	tab_symboles[current_address].type = 0;
+	tab_symboles[current_address].name = strdup(name);
+	current_address++;
+}
+
 int get_var(char* name){ //retourne l'adresse de la variable (sa position dans le tableau)
 	for(int i = 0; i < (TAB_SIZE - 1); i++){
 		if(strcmp(tab_symboles[i].name, name) == 0){
@@ -39,6 +45,17 @@ int get_var(char* name){ //retourne l'adresse de la variable (sa position dans l
 		}
 	}
 	return -1;
+}
+
+int check_const(char* name){
+	for(int i = 0; i < (TAB_SIZE - 1); i++){
+		if(strcmp(tab_symboles[i].name, name) == 0){
+			if(tab_symboles[i].type == 0){
+				return 1;
+			}	
+		}
+	}
+	return 0;
 }
 
 void add_temp(){ //ajoute une variable dans la table des symboles
@@ -98,6 +115,7 @@ body: ligne tPV body
 
 ligne: expr
 |tINT declaration
+|declarationConstante
 |print
 |affectation
 |tRET tNBR {printf("retour\n");}
@@ -107,13 +125,20 @@ declaration: tVAR tV declaration {add_var($1);}
 |tVAR {add_var($1);}
 ;
 
+declarationConstante: tCONST tINT tVAR tAFF expr {add_const($3);}
+;
+
 affectation: tVAR tAFF expr 
 	{int a = get_var($1);
 	if(a == -1)
 		{printf("ERREUR : variable %s non declaree\n",$1);}
-	else{			
-		fprintf(asmFile,"COP %d %d\n", a, $3);
-		free_temp(); // liberation des variables temporaires apres leur utilisation
+	else{	
+		if(check_const($1) == 1){
+			printf("ERREUR : %s est une constante, elle ne peut pas changer de valeur\n",$1);
+		}else{
+			fprintf(asmFile,"COP %d %d\n", a, $3);
+			free_temp(); // liberation des variables temporaires apres leur utilisation
+		}		
 	};}
 ;
 
