@@ -19,6 +19,13 @@ int current_address = 0;
 
 int pointeur_var_temp = TAB_SIZE - 1;
 
+void init_tab_symboles(){
+	for(int i = 0; i < (TAB_SIZE - 1); i++){
+		tab_symboles[i].type = 1;
+		tab_symboles[i].name = "";
+	}
+}
+
 void add_var(char* name){ //ajoute une variable dans la table des symboles
 	tab_symboles[current_address].type = 1;
 	tab_symboles[current_address].name = strdup(name);
@@ -59,7 +66,7 @@ FILE* asmFile;
 
 %type <nb> expr
 
-%token tMAIN tINT tCONST tRET 
+%token tMAIN tINT tCONST tRET
 %token tADD tSUB tDIV tMUL tMOD tAFF
 %token tPO tPF tAO tAF
 %token tPRINTF
@@ -90,9 +97,9 @@ body: ligne tPV body
 ;
 
 ligne: expr
-|tINT declaration {printf("declaration\n");}
-|print {printf("print\n");}
-|affectation {printf("affectation\n");}
+|tINT declaration
+|print
+|affectation
 |tRET tNBR {printf("retour\n");}
 ;
 
@@ -102,9 +109,12 @@ declaration: tVAR tV declaration {add_var($1);}
 
 affectation: tVAR tAFF expr 
 	{int a = get_var($1);
-	fprintf(asmFile,"COP %d %d\n", a, $3);
-	free_temp(); // liberation des variables temporaires apres leur utilisation
-	}
+	if(a == -1)
+		{printf("ERREUR : variable %s non declaree\n",$1);}
+	else{			
+		fprintf(asmFile,"COP %d %d\n", a, $3);
+		free_temp(); // liberation des variables temporaires apres leur utilisation
+	};}
 ;
 
 expr: tPO expr tPF {$$ = $2;}
@@ -114,9 +124,24 @@ expr: tPO expr tPF {$$ = $2;}
 	fprintf(asmFile,"ADD %d %d %d\n", a, $1, $3);
 	$$ = a;
 	}
-| expr tSUB expr {printf("soustraction\n");}
-| expr tMUL expr {printf("multiplication\n");}
-| expr tDIV expr {printf("division\n");}
+| expr tSUB expr
+	{add_temp();
+	int a = get_temp();
+	fprintf(asmFile,"SOU %d %d %d\n", a, $1, $3);
+	$$ = a;
+	}
+| expr tMUL expr
+	{add_temp();
+	int a = get_temp();
+	fprintf(asmFile,"MUL %d %d %d\n", a, $1, $3);
+	$$ = a;
+	}
+| expr tDIV expr
+	{add_temp();
+	int a = get_temp();
+	fprintf(asmFile,"DIV %d %d %d\n", a, $1, $3);
+	$$ = a;
+	}
 | expr tMOD expr {printf("modulo\n");}
 | tNBR 
 	{add_temp();
@@ -134,12 +159,19 @@ expr: tPO expr tPF {$$ = $2;}
 ;
 
 print: tPRINTF tPO tVAR tPF
+	{int a = get_var($3);
+	if(a == -1)
+		{printf("ERREUR : variable %s non declaree\n",$3);}
+	else{			
+		fprintf(asmFile,"PRI %d \n", a);
+	};}
 ;
 
 %%
 int main()
 {
 asmFile = fopen("test.asm","w");
+init_tab_symboles();
  return(yyparse());
 }
 int yyerror(char *s)
