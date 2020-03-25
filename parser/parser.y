@@ -83,8 +83,9 @@ FILE* asmFile;
 
 %type <nb> expr
 
-%token tMAIN tINT tCONST tRET
+%token tMAIN tINT tCONST tRET tIF tWHILE tELSE
 %token tADD tSUB tDIV tMUL tMOD tAFF
+%token tEQU tINF tSUP tDIF
 %token tPO tPF tAO tAF
 %token tPRINTF
 %token <nb> tNBR
@@ -119,6 +120,7 @@ ligne: expr
 |print
 |affectation
 |tRET tNBR {printf("retour\n");}
+|tPO condition tPF {printf("condition\n");}
 ;
 
 declaration: tVAR tV declaration {add_var($1);}
@@ -126,6 +128,12 @@ declaration: tVAR tV declaration {add_var($1);}
 ;
 
 declarationConstante: tCONST tINT tVAR tAFF expr {add_const($3);}
+;
+
+condition: expr tEQU expr
+| expr tINF expr
+| expr tSUP expr
+| expr tDIF expr
 ;
 
 affectation: tVAR tAFF expr 
