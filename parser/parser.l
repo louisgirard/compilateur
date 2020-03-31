@@ -14,7 +14,6 @@
 "-" return tSUB;
 "/" return tDIV;
 "*" return tMUL;
-"%" return tMOD;
 "=" return tAFF;
 "==" return tEQU;
 "<" return tINF;

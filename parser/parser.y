@@ -82,9 +82,10 @@ FILE* asmFile;
 }
 
 %type <nb> expr
+%type <nb> condition
 
 %token tMAIN tINT tCONST tRET tIF tWHILE tELSE
-%token tADD tSUB tDIV tMUL tMOD tAFF
+%token tADD tSUB tDIV tMUL tAFF
 %token tEQU tINF tSUP tDIF
 %token tPO tPF tAO tAF
 %token tPRINTF
@@ -111,7 +112,8 @@ start: tINT tMAIN tPO tPF tAO body tAF {fclose(asmFile);}
 ;
 
 body: ligne tPV body 
-| ligne tPV
+| blocIf body
+|
 ;
 
 ligne: expr
@@ -120,22 +122,30 @@ ligne: expr
 |print
 |affectation
 |tRET tNBR {printf("retour\n");}
-|tPO condition tPF {printf("condition\n");}
-|blocIf
 ;
 
 declaration: tVAR tV declaration {add_var($1);}
 |tVAR {add_var($1);}
 ;
 
-declarationConstante: tCONST tINT tVAR tAFF expr {add_const($3);}
+declarationConstante: tCONST tINT tVAR tAFF expr 
+	{add_const($3);
+		int a = get_var($3);
+		fprintf(asmFile,"COP %d %d\n", a, $5);
+		free_temp(); // liberation des variables temporaires apres leur utilisation
+	}
 ;
 
-blocIf: tIF tPO condition tPF tAO body tAF
-| tIF tPO condition tPF tAO body tAF tELSE tAO body tAF
+blocIf: tIF tPO condition tPF tAO body tAF {printf("bloc if\n");}
+| tIF tPO condition tPF tAO body tAF tELSE tAO body tAF {printf("bloc if else\n");}
 ;
 
-condition: expr tEQU expr
+condition: expr tEQU expr 
+	{add_temp();
+	int a = get_temp();
+	fprintf(asmFile,"EQU %d %d %d\n", a, $1, $3);
+	$$ = a;
+	}
 | expr tINF expr
 | expr tSUP expr
 | expr tDIF expr
@@ -180,7 +190,6 @@ expr: tPO expr tPF {$$ = $2;}
 	fprintf(asmFile,"DIV %d %d %d\n", a, $1, $3);
 	$$ = a;
 	}
-| expr tMOD expr {printf("modulo\n");}
 | tNBR 
 	{add_temp();
 	int a = get_temp();
