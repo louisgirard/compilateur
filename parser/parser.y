@@ -121,6 +121,7 @@ ligne: expr
 |affectation
 |tRET tNBR {printf("retour\n");}
 |tPO condition tPF {printf("condition\n");}
+|blocIf
 ;
 
 declaration: tVAR tV declaration {add_var($1);}
@@ -128,6 +129,10 @@ declaration: tVAR tV declaration {add_var($1);}
 ;
 
 declarationConstante: tCONST tINT tVAR tAFF expr {add_const($3);}
+;
+
+blocIf: tIF tPO condition tPF tAO body tAF
+| tIF tPO condition tPF tAO body tAF tELSE tAO body tAF
 ;
 
 condition: expr tEQU expr
