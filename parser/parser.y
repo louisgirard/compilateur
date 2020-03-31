@@ -3,7 +3,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define TAB_SIZE 256
+#define TAB_SYMB_SIZE 256
+#define TAB_INST_SIZE 100
 
 int yylex();
 int yyerror(char *s);
@@ -13,17 +14,42 @@ typedef struct{
 	char* name;
 }champ;
 
-champ tab_symboles[TAB_SIZE]; //table des symboles, en partant de la fin elle est utilisee pour les variables temporaires associe avec un pointeur de variable temporaire
+char* tab_instructions[100]; //tableau contenant les instructions assembleurs, a mettre par la suite dans un fichier
+
+int current_instruction = 0;
+
+champ tab_symboles[TAB_SYMB_SIZE]; //table des symboles, en partant de la fin elle est utilisee pour les variables temporaires associe avec un pointeur de variable temporaire
 
 int current_address = 0;
 
-int pointeur_var_temp = TAB_SIZE - 1;
+int pointeur_var_temp = TAB_SYMB_SIZE - 1;
+
+void init_tab_instructions(){
+	for(int i = 0; i < (TAB_INST_SIZE - 1); i++){
+		tab_instructions[i] = "";
+	}
+}
 
 void init_tab_symboles(){
-	for(int i = 0; i < (TAB_SIZE - 1); i++){
+	for(int i = 0; i < (TAB_SYMB_SIZE - 1); i++){
 		tab_symboles[i].type = 1;
 		tab_symboles[i].name = "";
 	}
+}
+
+void add_instruction(char* inst){
+	tab_instructions[current_instruction] = strdup(inst);
+	current_instruction++;
+}
+
+void instructions_to_file(){
+	FILE* asmFile =	fopen("test.asm","w");
+	int num_instr = 0;
+	do{
+		fprintf(asmFile,tab_instructions[num_instr]);
+		num_instr++;
+	}while(tab_instructions[num_instr] != "");
+	fclose(asmFile);
 }
 
 void add_var(char* name){ //ajoute une variable dans la table des symboles
@@ -39,7 +65,7 @@ void add_const(char* name){ //ajoute une constante dans la table des symboles
 }
 
 int get_var(char* name){ //retourne l'adresse de la variable (sa position dans le tableau)
-	for(int i = 0; i < (TAB_SIZE - 1); i++){
+	for(int i = 0; i < (TAB_SYMB_SIZE - 1); i++){
 		if(strcmp(tab_symboles[i].name, name) == 0){
 			return i;		
 		}
@@ -48,7 +74,7 @@ int get_var(char* name){ //retourne l'adresse de la variable (sa position dans l
 }
 
 int check_const(char* name){
-	for(int i = 0; i < (TAB_SIZE - 1); i++){
+	for(int i = 0; i < (TAB_SYMB_SIZE - 1); i++){
 		if(strcmp(tab_symboles[i].name, name) == 0){
 			if(tab_symboles[i].type == 0){
 				return 1;
@@ -69,10 +95,8 @@ int get_temp(){
 }
 
 void free_temp(){
-	pointeur_var_temp = TAB_SIZE - 1;
+	pointeur_var_temp = TAB_SYMB_SIZE - 1;
 }
-
-FILE* asmFile;
 
 %}
 
@@ -108,7 +132,7 @@ compteur pour les variables temporaires, penser a liberer la memoire !!!
 
 %%
 
-start: tINT tMAIN tPO tPF tAO body tAF {fclose(asmFile);}
+start: tINT tMAIN tPO tPF tAO body tAF
 ;
 
 body: ligne tPV body 
@@ -130,9 +154,11 @@ declaration: tVAR tV declaration {add_var($1);}
 
 declarationConstante: tCONST tINT tVAR tAFF expr 
 	{add_const($3);
-		int a = get_var($3);
-		fprintf(asmFile,"COP %d %d\n", a, $5);
-		free_temp(); // liberation des variables temporaires apres leur utilisation
+	int a = get_var($3);
+	char instruction[20];
+	sprintf(instruction,"COP %d %d\n", a, $5);
+	add_instruction(instruction);
+	free_temp(); // liberation des variables temporaires apres leur utilisation
 	}
 ;
 
@@ -143,7 +169,9 @@ blocIf: tIF tPO condition tPF tAO body tAF {printf("bloc if\n");}
 condition: expr tEQU expr 
 	{add_temp();
 	int a = get_temp();
-	fprintf(asmFile,"EQU %d %d %d\n", a, $1, $3);
+	char instruction[20];
+	sprintf(instruction,"EQU %d %d %d\n", a, $1, $3);
+	add_instruction(instruction);
 	$$ = a;
 	}
 | expr tINF expr
@@ -159,7 +187,9 @@ affectation: tVAR tAFF expr
 		if(check_const($1) == 1){
 			printf("ERREUR : %s est une constante, elle ne peut pas changer de valeur\n",$1);
 		}else{
-			fprintf(asmFile,"COP %d %d\n", a, $3);
+			char instruction[20];
+			sprintf(instruction,"COP %d %d\n", a, $3);
+			add_instruction(instruction);
 			free_temp(); // liberation des variables temporaires apres leur utilisation
 		}		
 	};}
@@ -169,31 +199,41 @@ expr: tPO expr tPF {$$ = $2;}
 | expr tADD expr 
 	{add_temp();
 	int a = get_temp();
-	fprintf(asmFile,"ADD %d %d %d\n", a, $1, $3);
+	char instruction[20];
+	sprintf(instruction,"ADD %d %d %d\n", a, $1, $3);
+	add_instruction(instruction);
 	$$ = a;
 	}
 | expr tSUB expr
 	{add_temp();
 	int a = get_temp();
-	fprintf(asmFile,"SOU %d %d %d\n", a, $1, $3);
+	char instruction[20];
+	sprintf(instruction,"SOU %d %d %d\n", a, $1, $3);
+	add_instruction(instruction);
 	$$ = a;
 	}
 | expr tMUL expr
 	{add_temp();
 	int a = get_temp();
-	fprintf(asmFile,"MUL %d %d %d\n", a, $1, $3);
+	char instruction[20];
+	sprintf(instruction,"MUL %d %d %d\n", a, $1, $3);
+	add_instruction(instruction);
 	$$ = a;
 	}
 | expr tDIV expr
 	{add_temp();
 	int a = get_temp();
-	fprintf(asmFile,"DIV %d %d %d\n", a, $1, $3);
+	char instruction[20];
+	sprintf(instruction,"DIV %d %d %d\n", a, $1, $3);
+	add_instruction(instruction);
 	$$ = a;
 	}
 | tNBR 
 	{add_temp();
 	int a = get_temp();
-	fprintf(asmFile,"AFC %d %d\n", a, $1);
+	char instruction[20];
+	sprintf(instruction,"AFC %d %d\n", a, $1);
+	add_instruction(instruction);
 	$$ = a;
 	}
 | tVAR 
@@ -209,17 +249,21 @@ print: tPRINTF tPO tVAR tPF
 	{int a = get_var($3);
 	if(a == -1)
 		{printf("ERREUR : variable %s non declaree\n",$3);}
-	else{			
-		fprintf(asmFile,"PRI %d \n", a);
+	else{	
+		char instruction[20];		
+		sprintf(instruction,"PRI %d \n", a);
+		add_instruction(instruction);
 	};}
 ;
 
 %%
 int main()
 {
-asmFile = fopen("test.asm","w");
+init_tab_instructions();
 init_tab_symboles();
- return(yyparse());
+int result = yyparse();
+instructions_to_file();
+ return result;
 }
 int yyerror(char *s)
 {
