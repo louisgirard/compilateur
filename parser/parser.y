@@ -24,6 +24,10 @@ int current_address = 0;
 
 int pointeur_var_temp = TAB_SYMB_SIZE - 1;
 
+int lignes_jmp[50];
+
+int current_ligne;
+
 void init_tab_instructions(){
 	for(int i = 0; i < (TAB_INST_SIZE - 1); i++){
 		tab_instructions[i] = "";
@@ -98,12 +102,27 @@ void free_temp(){
 	pointeur_var_temp = TAB_SYMB_SIZE - 1;
 }
 
-void patch_jmp(int ligne_instruction, int ligne_jmp){
-	char instruction[20];
-	sprintf(instruction,"%s %d\n", tab_instructions[ligne_instruction], ligne_jmp);
-	tab_instructions[ligne_instruction] = strdup(instruction);
+
+void add_ligne_jmp(int ligne){
+	lignes_jmp[current_ligne] = ligne;
+	current_ligne++;
 }
 
+int get_ligne_jmp(){
+	return lignes_jmp[current_ligne-1];
+}
+
+void free_ligne_jmp(){
+	current_ligne--;
+}
+
+void patch_jmp(int ligne_jmp){
+	char instruction[20];
+	int ligne_instruction = get_ligne_jmp();
+	sprintf(instruction,"%s %d\n", tab_instructions[ligne_instruction], ligne_jmp);
+	tab_instructions[ligne_instruction] = strdup(instruction);
+	free_ligne_jmp();
+}
 %}
 
 %union {
@@ -113,15 +132,15 @@ void patch_jmp(int ligne_instruction, int ligne_jmp){
 
 %type <nb> expr
 %type <nb> condition
+%type <nb> blocIfSuite
 
-%token tMAIN tINT tCONST tRET tWHILE tELSE
+%token tMAIN tINT tCONST tRET tIF tWHILE tELSE
 %token tADD tSUB tDIV tMUL tAFF
 %token tEQU tINF tSUP tDIF
 %token tPO tPF tAO tAF
 %token tPRINTF
 %token <nb> tNBR
 %token <var> tVAR
-%token <nb> tIF
 %token tV tPV
 
 %right tAFF
@@ -143,7 +162,7 @@ start: tINT tMAIN tPO tPF tAO body tAF
 ;
 
 body: ligne tPV body 
-| blocIf body
+| blocIf body 
 |
 ;
 
@@ -171,38 +190,32 @@ declarationConstante: tCONST tINT tVAR tAFF expr
 
 
 blocIf: tIF tPO condition tPF
-	{$1 = current_instruction;
+	{add_ligne_jmp(current_instruction);
 	char instruction[20];
 	sprintf(instruction,"JMF %d", $3);
 	add_instruction(instruction);
 	}
-tAO body tAF
-	{patch_jmp($1,current_instruction);
-	printf("bloc if\n");
+tAO body tAF blocIfSuite
+;
+
+blocIfSuite: 
+	{patch_jmp(current_instruction);
 	}
 |
-tIF tPO condition tPF
-	{$1 = current_instruction;
-	char instruction[20];
-	sprintf(instruction,"JMF %d", $3);
-	add_instruction(instruction);
-	}
-tAO body tAF
-	{patch_jmp($1,current_instruction + 1); //+1 pour sauter le prochain jmp (car bloc if else) et passer dans le bloc else
-	$1 = current_instruction;
+	{patch_jmp(current_instruction + 1); //+1 pour sauter le prochain jmp (car bloc if else) et passer dans le bloc else
+	add_ligne_jmp(current_instruction);
 	char instruction[20];
 	sprintf(instruction,"JMP");
 	add_instruction(instruction);	
 	}
 tELSE tAO body tAF 
-	{patch_jmp($1,current_instruction);
-	printf("bloc ifelse\n");
+	{patch_jmp(current_instruction);
 	}
 
 ;
 
-/*blocIf: tIF tPO condition tPF tAO body tAF {printf("bloc if\n");}
-|tIF tPO condition tPF tAO body tAF tELSE tAO body tAF {printf("bloc ifelse\n");};
+/*blocIf: tIF tPO condition tPF {printf("bloc if\n");} tAO body tAF 
+|tIF tPO condition tPF {printf("bloc ifelse\n");} tAO body tAF tELSE tAO body tAF ;
 */
 
 condition: expr tEQU expr 
