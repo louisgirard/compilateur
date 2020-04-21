@@ -98,6 +98,12 @@ void free_temp(){
 	pointeur_var_temp = TAB_SYMB_SIZE - 1;
 }
 
+void patch_jmp(int ligne_instruction, int ligne_jmp){
+	char instruction[20];
+	sprintf(instruction,"%s %d\n", tab_instructions[ligne_instruction], ligne_jmp);
+	tab_instructions[ligne_instruction] = strdup(instruction);
+}
+
 %}
 
 %union {
@@ -108,13 +114,14 @@ void free_temp(){
 %type <nb> expr
 %type <nb> condition
 
-%token tMAIN tINT tCONST tRET tIF tWHILE tELSE
+%token tMAIN tINT tCONST tRET tWHILE tELSE
 %token tADD tSUB tDIV tMUL tAFF
 %token tEQU tINF tSUP tDIF
 %token tPO tPF tAO tAF
 %token tPRINTF
 %token <nb> tNBR
 %token <var> tVAR
+%token <nb> tIF
 %token tV tPV
 
 %right tAFF
@@ -162,9 +169,41 @@ declarationConstante: tCONST tINT tVAR tAFF expr
 	}
 ;
 
-blocIf: tIF tPO condition tPF tAO body tAF {printf("bloc if\n");}
-| tIF tPO condition tPF tAO body tAF tELSE tAO body tAF {printf("bloc if else\n");}
+
+blocIf: tIF tPO condition tPF
+	{$1 = current_instruction;
+	char instruction[20];
+	sprintf(instruction,"JMF %d", $3);
+	add_instruction(instruction);
+	}
+tAO body tAF
+	{patch_jmp($1,current_instruction);
+	printf("bloc if\n");
+	}
+|
+tIF tPO condition tPF
+	{$1 = current_instruction;
+	char instruction[20];
+	sprintf(instruction,"JMF %d", $3);
+	add_instruction(instruction);
+	}
+tAO body tAF
+	{patch_jmp($1,current_instruction + 1); //+1 pour sauter le prochain jmp (car bloc if else) et passer dans le bloc else
+	$1 = current_instruction;
+	char instruction[20];
+	sprintf(instruction,"JMP");
+	add_instruction(instruction);	
+	}
+tELSE tAO body tAF 
+	{patch_jmp($1,current_instruction);
+	printf("bloc ifelse\n");
+	}
+
 ;
+
+/*blocIf: tIF tPO condition tPF tAO body tAF {printf("bloc if\n");}
+|tIF tPO condition tPF tAO body tAF tELSE tAO body tAF {printf("bloc ifelse\n");};
+*/
 
 condition: expr tEQU expr 
 	{add_temp();
@@ -175,7 +214,21 @@ condition: expr tEQU expr
 	$$ = a;
 	}
 | expr tINF expr
+	{add_temp();
+	int a = get_temp();
+	char instruction[20];
+	sprintf(instruction,"INF %d %d %d\n", a, $1, $3);
+	add_instruction(instruction);
+	$$ = a;
+	}
 | expr tSUP expr
+	{add_temp();
+	int a = get_temp();
+	char instruction[20];
+	sprintf(instruction,"SUP %d %d %d\n", a, $1, $3);
+	add_instruction(instruction);
+	$$ = a;
+	}
 | expr tDIF expr
 ;
 
