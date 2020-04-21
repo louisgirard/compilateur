@@ -132,7 +132,6 @@ void patch_jmp(int ligne_jmp){
 
 %type <nb> expr
 %type <nb> condition
-%type <nb> blocIfSuite
 
 %token tMAIN tINT tCONST tRET tIF tWHILE tELSE
 %token tADD tSUB tDIV tMUL tAFF
@@ -163,6 +162,7 @@ start: tINT tMAIN tPO tPF tAO body tAF
 
 body: ligne tPV body 
 | blocIf body 
+| blocWhile body
 |
 ;
 
@@ -211,12 +211,26 @@ blocIfSuite:
 tELSE tAO body tAF 
 	{patch_jmp(current_instruction);
 	}
-
 ;
 
-/*blocIf: tIF tPO condition tPF {printf("bloc if\n");} tAO body tAF 
-|tIF tPO condition tPF {printf("bloc ifelse\n");} tAO body tAF tELSE tAO body tAF ;
-*/
+blocWhile: tWHILE
+	{add_ligne_jmp(current_instruction); //utilisation differente, on enregistre la ou on doit sauter au lieu de la ligne JMP
+	}
+tPO condition tPF 
+	{add_ligne_jmp(current_instruction);
+	char instruction[20];
+	sprintf(instruction,"JMF %d", $4);
+	add_instruction(instruction);
+	}
+tAO body tAF
+	{patch_jmp(current_instruction + 1); //+1 pour sauter le prochain jmp
+	char instruction[20];
+	int ligne_to_jmp = get_ligne_jmp(); //on recupere la ou on doit sauter
+	sprintf(instruction,"JMP %d\n", ligne_to_jmp);
+	add_instruction(instruction);
+	free_ligne_jmp(); //on libere cette variable de saut
+	}
+;
 
 condition: expr tEQU expr 
 	{add_temp();

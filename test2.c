@@ -9,7 +9,7 @@ int main()
 		printf(a);
 	}
 	k = 88;
-	if (k==88){
-		printf(k);	
+	while(k == 88){
+		printf(k);
 	}
 }
