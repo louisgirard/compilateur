@@ -119,7 +119,7 @@ void free_ligne_jmp(){
 void patch_jmp(int ligne_jmp){
 	char instruction[20];
 	int ligne_instruction = get_ligne_jmp();
-	sprintf(instruction,"%s %d\n", tab_instructions[ligne_instruction], ligne_jmp);
+	sprintf(instruction,"%s %d\n", tab_instructions[ligne_instruction], ligne_jmp + 1); //+1 car instruction commence a l'indice 0
 	tab_instructions[ligne_instruction] = strdup(instruction);
 	free_ligne_jmp();
 }
@@ -226,7 +226,7 @@ tAO body tAF
 	{patch_jmp(current_instruction + 1); //+1 pour sauter le prochain jmp
 	char instruction[20];
 	int ligne_to_jmp = get_ligne_jmp(); //on recupere la ou on doit sauter
-	sprintf(instruction,"JMP %d\n", ligne_to_jmp);
+	sprintf(instruction,"JMP %d\n", ligne_to_jmp + 1);
 	add_instruction(instruction);
 	free_ligne_jmp(); //on libere cette variable de saut
 	}
