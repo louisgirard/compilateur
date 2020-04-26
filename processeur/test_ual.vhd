@@ -2,9 +2,9 @@
 -- Company: 
 -- Engineer:
 --
--- Create Date:   15:37:22 04/22/2020
+-- Create Date:   10:02:19 04/26/2020
 -- Design Name:   
--- Module Name:   D:/Documents/INSA/4A/compilateur/processeur/testual.vhd
+-- Module Name:   D:/Documents/INSA/4A/compilateur/processeur/test_ual.vhd
 -- Project Name:  processeur
 -- Target Device:  
 -- Tool versions:  
@@ -32,16 +32,15 @@ USE ieee.std_logic_1164.ALL;
 -- arithmetic functions with Signed or Unsigned values
 --USE ieee.numeric_std.ALL;
  
-ENTITY testual IS
-END testual;
+ENTITY test_ual IS
+END test_ual;
  
-ARCHITECTURE behavior OF testual IS 
+ARCHITECTURE behavior OF test_ual IS 
  
     -- Component Declaration for the Unit Under Test (UUT)
  
     COMPONENT ual
     PORT(
-         CLK : IN  std_logic;
          A : IN  std_logic_vector(7 downto 0);
          B : IN  std_logic_vector(7 downto 0);
          Ctrl_Alu : IN  std_logic_vector(2 downto 0);
@@ -55,7 +54,6 @@ ARCHITECTURE behavior OF testual IS
     
 
    --Inputs
-   signal CLK : std_logic := '0';
    signal A : std_logic_vector(7 downto 0) := (others => '0');
    signal B : std_logic_vector(7 downto 0) := (others => '0');
    signal Ctrl_Alu : std_logic_vector(2 downto 0) := (others => '0');
@@ -66,15 +64,13 @@ ARCHITECTURE behavior OF testual IS
    signal O : std_logic;
    signal Z : std_logic;
    signal C : std_logic;
-
-   -- Clock period definitions
-   constant CLK_period : time := 10 ns;
+   -- No clocks detected in port list. Replace <clock> below with 
+   -- appropriate port name 
  
 BEGIN
  
 	-- Instantiate the Unit Under Test (UUT)
    uut: ual PORT MAP (
-          CLK => CLK,
           A => A,
           B => B,
           Ctrl_Alu => Ctrl_Alu,
@@ -84,34 +80,24 @@ BEGIN
           Z => Z,
           C => C
         );
-
-   -- Clock process definitions
-   CLK_process :process
-   begin
-		CLK <= '0';
-		wait for CLK_period/2;
-		CLK <= '1';
-		wait for CLK_period/2;
-   end process;
- 
-
-   -- Stimulus process
+	
+	-- Stimulus process
    stim_proc: process
-   begin		
-      -- hold reset state for 100 ns.
-      wait for 100 ns;	
-
-      wait for CLK_period*10;
-
-      -- insert stimulus here 
-		
+   begin
+		wait for 100 ns;
+	
+		A <= x"ff";
+		B <= x"02";
 		Ctrl_Alu <= "000";
-		A <= "00000001";
-		B <= "00000010";
 		
-      wait for CLK_period*10;
-
-      wait;
-   end process;
+		wait for 100 ns;
+		
+		Ctrl_Alu <= "001";
+		
+		wait for 100 ns;
+		
+		Ctrl_Alu <= "010";
+		
+	end process;
 
 END;
