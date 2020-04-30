@@ -56,11 +56,8 @@ begin
 				S_AUX <= A * B;
 			when "010" => --soustraction
 				S_AUX <= (x"00" & A) - (x"00" & B);
-			when "011" => --division
-				--S_AUX <= A / B;
-				S_AUX <= "1111111111111111";
 			when others =>
-				S_AUX <= "1111111111111111";
+				S_AUX <= x"ffff";
 			
 		end case;
 		S <= S_AUX(7 downto 0);
