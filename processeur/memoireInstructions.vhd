@@ -41,6 +41,7 @@ type mem is array (integer range 255 downto 0) of STD_LOGIC_VECTOR(31 downto 0);
 signal memoire : mem;
 
 begin
+	memoire(0) <= x"06010f00"; -- affectation dans le registre 1 de la valeur 15 (f) 
 	process(CLK)
 	begin
 		if rising_edge(CLK) then

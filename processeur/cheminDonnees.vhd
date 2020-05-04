@@ -109,14 +109,95 @@ architecture Behavioral of cheminDonnees is
            OPout : out  STD_LOGIC_VECTOR (7 downto 0);
            Bout : out  STD_LOGIC_VECTOR (7 downto 0));
 	end component;	
+	
+	-- signaux intermediaires pour pouvoir mapper les differents composants
+
+	--memoire instructions
+	signal memOut : STD_LOGIC_VECTOR (31 downto 0);
+	
+	--banc de registres
+	signal regQA : STD_LOGIC_VECTOR (7 downto 0);
+	signal regQB : STD_LOGIC_VECTOR (7 downto 0);
+	
+	--pipeline1
+	signal p1A : STD_LOGIC_VECTOR (7 downto 0);
+	signal p1OP : STD_LOGIC_VECTOR (7 downto 0);
+	signal p1B : STD_LOGIC_VECTOR (7 downto 0);
+	signal p1C : STD_LOGIC_VECTOR (7 downto 0);
+	
+	--pipeline2
+	signal p2A : STD_LOGIC_VECTOR (7 downto 0);
+	signal p2OP : STD_LOGIC_VECTOR (7 downto 0);
+	signal p2B : STD_LOGIC_VECTOR (7 downto 0);
+	signal p2C : STD_LOGIC_VECTOR (7 downto 0);
+	
+	--pipeline3
+	signal p3A : STD_LOGIC_VECTOR (7 downto 0);
+	signal p3OP : STD_LOGIC_VECTOR (7 downto 0);
+	signal p3B : STD_LOGIC_VECTOR (7 downto 0);
+	
+	--pipeline4
+	signal p4A : STD_LOGIC_VECTOR (7 downto 0);
+	signal p4OP : STD_LOGIC_VECTOR (7 downto 0);
+	signal p4B : STD_LOGIC_VECTOR (7 downto 0);
+	
+	--lc
+	signal lc3 : STD_LOGIC;
 
 begin
 	--mappage des ports des composants
 	memInstructions: memoireInstructions port map (
-		Addr => x"00",
+		Addr => x"00", --test avec l'instruction 0
 		CLK => CLK,
-		S => pipeline1.Ins);
-
+		S => memOut);
+		
+	pipelineLIDI: pipeline1 port map (
+		Instr => memOut,
+		A => p1A,
+		OP => p1OP,
+		B => p1B,
+		C => p1C);
+		
+	bancReg: bancregistres port map(
+		A => p1A(3 downto 0),
+		B => p1B(3 downto 0),
+		WAddr => p4A(3 downto 0),
+		W => lc3, --actif a 1
+		DATA => p4B,
+		RST => RST, --actif a 0
+		CLK => CLK,
+		QA => regQA,
+		QB => regQB);
+		
+	pipelineDIEX: pipeline2 port map (
+		Ain => p1A,
+		OPin => p1OP,
+		Bin => p1B,
+		Cin => p1C,
+		Aout => p2A,
+		OPout => p2OP,
+		Bout => p2B,
+		Cout => p2C);
+		
+	pipelineEXMem: pipeline3 port map (
+		Ain => p2A,
+		OPin => p2OP,
+		Bin => p2B,
+		Aout => p3A,
+		OPout => p3OP,
+		Bout => p3B);
+		
+	pipelineMemRE: pipeline4 port map (
+		Ain => p3A,
+		OPin => p3OP,
+		Bin => p3B,
+		Aout => p4A,
+		OPout => p4OP,
+		Bout => p4B);
+		
+	--lc
+	--en fonction de l'instruction on ecrit (1) ou non (0) dans le banc de registres 
+	lc3 <= '1' when (p4OP = x"06"); --AFC
 
 end Behavioral;
 

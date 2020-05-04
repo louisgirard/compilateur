@@ -54,6 +54,7 @@ begin
 				registres <= (others=>(others=>'0'));
 			else
 				if W='1' then
+					report "Ecriture dans le registre " & integer'image(to_integer(unsigned(WAddr))) & " de la valeur " & integer'image(to_integer(unsigned(DATA)));
 					registres(to_integer(unsigned(WAddr))) <= DATA;
 					if WAddr=A then
 						QA <= DATA;
