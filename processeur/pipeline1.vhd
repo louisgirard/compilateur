@@ -31,6 +31,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 entity pipeline1 is
     Port ( Instr : in  STD_LOGIC_VECTOR (31 downto 0);
+           CLK : in  STD_LOGIC;
            A : out  STD_LOGIC_VECTOR (7 downto 0);
            OP : out  STD_LOGIC_VECTOR (7 downto 0);
            B : out  STD_LOGIC_VECTOR (7 downto 0);
@@ -41,15 +42,17 @@ architecture Behavioral of pipeline1 is
 
 begin
 
-	process (Instr) is
+	process (CLK)
 	begin
-		OP <= Instr(31 downto 24);
-		A <= Instr(23 downto 16);
-		B <= Instr(15 downto 8);
-		if (Instr(31 downto 24) = x"01" or Instr(31 downto 24) = x"02" or Instr(31 downto 24) = x"03") then --add, mul, sou
-			C <= Instr(7 downto 0);
-		else --sinon pas besoin de la derniere operande
-			C <= x"00";
+		if rising_edge(CLK) then
+			OP <= Instr(31 downto 24);
+			A <= Instr(23 downto 16);
+			B <= Instr(15 downto 8);
+			if (Instr(31 downto 24) = x"01" or Instr(31 downto 24) = x"02" or Instr(31 downto 24) = x"03") then --add, mul, sou
+				C <= Instr(7 downto 0);
+			else --sinon pas besoin de la derniere operande
+				C <= x"00";
+			end if;
 		end if;
 	end process;
 

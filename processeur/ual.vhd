@@ -48,7 +48,6 @@ begin
 	
 	process (A,B,Ctrl_Alu,S_AUX) is
 	begin
-		
 		case Ctrl_Alu is
 			when "000" => --addition
 				S_AUX <= (x"00" & A) + (x"00" & B);

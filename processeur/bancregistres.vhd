@@ -62,6 +62,7 @@ begin
 						QB <= DATA;
 					end if;
 				else
+					report "Lecture des registres A et B : " & integer'image(to_integer(unsigned(registres(to_integer(unsigned(A)))))) & " / " & integer'image(to_integer(unsigned(registres(to_integer(unsigned(B))))));
 					QA <= registres(to_integer(unsigned(A)));
 					QB <= registres(to_integer(unsigned(B)));
 				end if;

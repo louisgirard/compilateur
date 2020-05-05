@@ -30,7 +30,8 @@ use IEEE.STD_LOGIC_1164.ALL;
 --use UNISIM.VComponents.all;
 
 entity pipeline4 is
-    Port ( Ain : in  STD_LOGIC_VECTOR (7 downto 0);
+    Port ( CLK : in  STD_LOGIC;
+			  Ain : in  STD_LOGIC_VECTOR (7 downto 0);
            OPin : in  STD_LOGIC_VECTOR (7 downto 0);
            Bin : in  STD_LOGIC_VECTOR (7 downto 0);
            Aout : out  STD_LOGIC_VECTOR (7 downto 0);
@@ -41,12 +42,14 @@ end pipeline4;
 architecture Behavioral of pipeline4 is
 
 begin
-
-	process(Ain,OPin,Bin) is
+	
+	process (CLK)
 	begin
-		Aout <= Ain;
-		OPout <= OPin;
-		Bout <= Bin;
+		if rising_edge(CLK) then
+			Aout <= Ain;
+			OPout <= OPin;
+			Bout <= Bin;
+		end if;
 	end process;
 
 

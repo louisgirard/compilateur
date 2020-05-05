@@ -2,7 +2,7 @@
 -- Company: 
 -- Engineer:
 --
--- Create Date:   10:16:57 05/04/2020
+-- Create Date:   13:59:47 05/05/2020
 -- Design Name:   
 -- Module Name:   D:/Documents/INSA/4A/compilateur/processeur/test_cheminDonnees.vhd
 -- Project Name:  processeur
@@ -42,7 +42,8 @@ ARCHITECTURE behavior OF test_cheminDonnees IS
     COMPONENT cheminDonnees
     PORT(
          CLK : IN  std_logic;
-         RST : IN  std_logic
+         RST : IN  std_logic;
+         AddrInstr : IN  std_logic_vector(7 downto 0)
         );
     END COMPONENT;
     
@@ -50,16 +51,19 @@ ARCHITECTURE behavior OF test_cheminDonnees IS
    --Inputs
    signal CLK : std_logic := '0';
    signal RST : std_logic := '0';
+   signal AddrInstr : std_logic_vector(7 downto 0) := (others => '0');
 
    -- Clock period definitions
    constant CLK_period : time := 10 ns;
+	constant wait_time : time := CLK_period*2;
  
 BEGIN
  
 	-- Instantiate the Unit Under Test (UUT)
    uut: cheminDonnees PORT MAP (
           CLK => CLK,
-          RST => RST
+          RST => RST,
+          AddrInstr => AddrInstr
         );
 
    -- Clock process definitions
@@ -77,13 +81,36 @@ BEGIN
    begin		
       -- hold reset state for 100 ns.
       wait for 100 ns;	
-		
-		RST <= '1';
 
       wait for CLK_period*10;
+		
+		RST <= '1';
+		AddrInstr <= x"00";
 
-      -- insert stimulus here 
+      wait for wait_time;
+		
+		AddrInstr <= x"01";
 
+      wait for wait_time;
+		
+		AddrInstr <= x"02";
+
+      wait for wait_time;
+		
+		AddrInstr <= x"03";
+
+      wait for wait_time;
+		
+		AddrInstr <= x"04";
+
+      wait for wait_time;
+		
+		AddrInstr <= x"05";
+
+      wait for wait_time;
+		
+		AddrInstr <= x"06";
+		
       wait;
    end process;
 

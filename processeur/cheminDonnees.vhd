@@ -31,7 +31,8 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 entity cheminDonnees is
     Port ( CLK : in  STD_LOGIC;
-           RST : in  STD_LOGIC);
+           RST : in  STD_LOGIC;
+			  AddrInstr : in  STD_LOGIC_VECTOR (7 downto 0));
 end cheminDonnees;
 
 architecture Behavioral of cheminDonnees is
@@ -74,7 +75,8 @@ architecture Behavioral of cheminDonnees is
 	end component;
 	
 	component pipeline1 is
-    Port ( Instr : in  STD_LOGIC_VECTOR (31 downto 0);
+    Port ( CLK : in  STD_LOGIC;
+			  Instr : in  STD_LOGIC_VECTOR (31 downto 0);
            A : out  STD_LOGIC_VECTOR (7 downto 0);
            OP : out  STD_LOGIC_VECTOR (7 downto 0);
            B : out  STD_LOGIC_VECTOR (7 downto 0);
@@ -82,7 +84,8 @@ architecture Behavioral of cheminDonnees is
 	end component;
 	
 	component pipeline2 is
-    Port ( Ain : in  STD_LOGIC_VECTOR (7 downto 0);
+    Port ( CLK : in  STD_LOGIC;
+			  Ain : in  STD_LOGIC_VECTOR (7 downto 0);
            OPin : in  STD_LOGIC_VECTOR (7 downto 0);
            Bin : in  STD_LOGIC_VECTOR (7 downto 0);
            Cin : in  STD_LOGIC_VECTOR (7 downto 0);
@@ -93,7 +96,8 @@ architecture Behavioral of cheminDonnees is
 	end component;
 	
 	component pipeline3 is
-    Port ( Ain : in  STD_LOGIC_VECTOR (7 downto 0);
+    Port ( CLK : in  STD_LOGIC;
+			  Ain : in  STD_LOGIC_VECTOR (7 downto 0);
            OPin : in  STD_LOGIC_VECTOR (7 downto 0);
            Bin : in  STD_LOGIC_VECTOR (7 downto 0);
            Aout : out  STD_LOGIC_VECTOR (7 downto 0);
@@ -102,7 +106,8 @@ architecture Behavioral of cheminDonnees is
 	end component;
 	
 	component pipeline4 is
-    Port ( Ain : in  STD_LOGIC_VECTOR (7 downto 0);
+    Port ( CLK : in  STD_LOGIC;
+			  Ain : in  STD_LOGIC_VECTOR (7 downto 0);
            OPin : in  STD_LOGIC_VECTOR (7 downto 0);
            Bin : in  STD_LOGIC_VECTOR (7 downto 0);
            Aout : out  STD_LOGIC_VECTOR (7 downto 0);
@@ -113,11 +118,17 @@ architecture Behavioral of cheminDonnees is
 	-- signaux intermediaires pour pouvoir mapper les differents composants
 
 	--memoire instructions
-	signal memOut : STD_LOGIC_VECTOR (31 downto 0);
+	signal memInstrOut : STD_LOGIC_VECTOR (31 downto 0);
 	
 	--banc de registres
 	signal regQA : STD_LOGIC_VECTOR (7 downto 0);
 	signal regQB : STD_LOGIC_VECTOR (7 downto 0);
+	
+	--alu
+	signal aluS : STD_LOGIC_VECTOR (7 downto 0);
+	
+	--memoire donnees
+	signal memDonneesOut : STD_LOGIC_VECTOR (7 downto 0);
 	
 	--pipeline1
 	signal p1A : STD_LOGIC_VECTOR (7 downto 0);
@@ -141,26 +152,35 @@ architecture Behavioral of cheminDonnees is
 	signal p4OP : STD_LOGIC_VECTOR (7 downto 0);
 	signal p4B : STD_LOGIC_VECTOR (7 downto 0);
 	
+	--multiplexeurs
+	signal mux1 : STD_LOGIC_VECTOR (7 downto 0);
+	signal mux2 : STD_LOGIC_VECTOR (7 downto 0);
+	signal mux3 : STD_LOGIC_VECTOR (7 downto 0);
+	signal mux4 : STD_LOGIC_VECTOR (7 downto 0);
+	
 	--lc
+	signal lc1 : STD_LOGIC_VECTOR (2 downto 0);
+	signal lc2 : STD_LOGIC;
 	signal lc3 : STD_LOGIC;
 
 begin
 	--mappage des ports des composants
 	memInstructions: memoireInstructions port map (
-		Addr => x"00", --test avec l'instruction 0
+		Addr => AddrInstr, --test avec l'instruction 0
 		CLK => CLK,
-		S => memOut);
+		S => memInstrOut);
 		
 	pipelineLIDI: pipeline1 port map (
-		Instr => memOut,
+		CLK => CLK,
+		Instr => memInstrOut,
 		A => p1A,
 		OP => p1OP,
 		B => p1B,
 		C => p1C);
 		
 	bancReg: bancregistres port map(
-		A => p1A(3 downto 0),
-		B => p1B(3 downto 0),
+		A => p1B(3 downto 0),
+		B => p1C(3 downto 0),
 		WAddr => p4A(3 downto 0),
 		W => lc3, --actif a 1
 		DATA => p4B,
@@ -170,34 +190,68 @@ begin
 		QB => regQB);
 		
 	pipelineDIEX: pipeline2 port map (
+		CLK => CLK,
 		Ain => p1A,
 		OPin => p1OP,
-		Bin => p1B,
-		Cin => p1C,
+		Bin => mux1,
+		Cin => regQB,
 		Aout => p2A,
 		OPout => p2OP,
 		Bout => p2B,
 		Cout => p2C);
 		
+	alu: ual port map (
+		A => p2B,
+		B => p2C,
+		Ctrl_alu => lc1,
+		S => aluS);		
+		
 	pipelineEXMem: pipeline3 port map (
+		CLK => CLK,
 		Ain => p2A,
 		OPin => p2OP,
-		Bin => p2B,
+		Bin => mux2,
 		Aout => p3A,
 		OPout => p3OP,
 		Bout => p3B);
 		
+	memDonnees: memoireDonnees port map(
+		Addr => mux3,
+		E => p3B, --a mapper
+		RW => lc2,
+		RST => RST,
+		CLK => CLK,
+		S => memDonneesOut);
+		
 	pipelineMemRE: pipeline4 port map (
+		CLK => CLK,
 		Ain => p3A,
 		OPin => p3OP,
-		Bin => p3B,
+		Bin => mux4,
 		Aout => p4A,
 		OPout => p4OP,
 		Bout => p4B);
 		
+	--multiplexeurs
+	--en fonction de l'instruction on prend la sortie B du pipeline1 ou la sortie QA du banc de registres si
+	--on a besoin de lire la valeur dans le registre
+	mux1 <= regQA when p1OP = x"01" or p1OP = x"02" or p1OP = x"03" or p1OP = x"05" or p1OP = x"08" else p1B; --ADD, MUL, SOU, COP, STORE
+	--besoin de l'alu uniquement pour les operations arithmetiques
+	mux2 <= aluS when p2OP = x"01" or p2OP = x"02" or p2OP = x"03" else p2B; --ADD, MUL, SOU
+	mux3 <= p3A when p3OP = x"08" else p3B; --STORE
+	--lecture de donnees uniquement en LOAD
+	mux4 <= memDonneesOut when p3OP = x"07" else p3B; --LOAD
+			
 	--lc
+	lc1 <= "000" when p2OP = x"01" --ADD
+	else "001" when p2OP = x"02" --MUL
+	else "010" when p2OP = x"03" --SOU
+	else "111";
+	
+	lc2 <= '1' when p3OP = x"07" else '0'; --lecture quand LOAD sinon ecriture (pour STORE)
+	
 	--en fonction de l'instruction on ecrit (1) ou non (0) dans le banc de registres 
-	lc3 <= '1' when (p4OP = x"06"); --AFC
+	lc3 <= '0' when p4OP = x"08" else '1'; --lecture pour STORE, les autres ecrivent
 
 end Behavioral;
 
