@@ -54,7 +54,6 @@ begin
 				registres <= (others=>(others=>'0'));
 			else
 				if W='1' then
-					report "Ecriture dans le registre " & integer'image(to_integer(unsigned(WAddr))) & " de la valeur " & integer'image(to_integer(unsigned(DATA)));
 					registres(to_integer(unsigned(WAddr))) <= DATA;
 					if WAddr=A then
 						QA <= DATA;
@@ -62,12 +61,14 @@ begin
 						QB <= DATA;
 					end if;
 				else
-					report "Lecture des registres A et B : " & integer'image(to_integer(unsigned(registres(to_integer(unsigned(A)))))) & " / " & integer'image(to_integer(unsigned(registres(to_integer(unsigned(B))))));
 					QA <= registres(to_integer(unsigned(A)));
 					QB <= registres(to_integer(unsigned(B)));
 				end if;
 			end if;
 		end if;
+		for I in 0 to 15 loop
+			report "Registre " & integer'image(I) & ", valeur : " & integer'image(to_integer(unsigned(registres(I))));
+		end loop;
 	end process;
 
 end Behavioral;

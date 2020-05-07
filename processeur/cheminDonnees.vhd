@@ -77,6 +77,7 @@ architecture Behavioral of cheminDonnees is
 	component pipeline1 is
     Port ( CLK : in  STD_LOGIC;
 			  Instr : in  STD_LOGIC_VECTOR (31 downto 0);
+			  Alea : in STD_LOGIC;
            A : out  STD_LOGIC_VECTOR (7 downto 0);
            OP : out  STD_LOGIC_VECTOR (7 downto 0);
            B : out  STD_LOGIC_VECTOR (7 downto 0);
@@ -162,7 +163,13 @@ architecture Behavioral of cheminDonnees is
 	signal lc1 : STD_LOGIC_VECTOR (2 downto 0);
 	signal lc2 : STD_LOGIC;
 	signal lc3 : STD_LOGIC;
-
+	
+	--aleas
+	signal alea : STD_LOGIC;
+	signal p1WR : STD_LOGIC; --0 lecture, 1 ecriture
+	signal p2WR : STD_LOGIC; --0 lecture, 1 ecriture
+	signal p3WR : STD_LOGIC; --0 lecture, 1 ecriture
+	
 begin
 	--mappage des ports des composants
 	memInstructions: memoireInstructions port map (
@@ -173,6 +180,7 @@ begin
 	pipelineLIDI: pipeline1 port map (
 		CLK => CLK,
 		Instr => memInstrOut,
+		Alea => alea,
 		A => p1A,
 		OP => p1OP,
 		B => p1B,
@@ -217,7 +225,7 @@ begin
 		
 	memDonnees: memoireDonnees port map(
 		Addr => mux3,
-		E => p3B, --a mapper
+		E => p3B,
 		RW => lc2,
 		RST => RST,
 		CLK => CLK,
@@ -248,10 +256,20 @@ begin
 	else "010" when p2OP = x"03" --SOU
 	else "111";
 	
-	lc2 <= '1' when p3OP = x"07" else '0'; --lecture quand LOAD sinon ecriture (pour STORE)
+	lc2 <= '0' when p3OP = x"08" else '1'; --ecriture quand STORE sinon lecture
 	
 	--en fonction de l'instruction on ecrit (1) ou non (0) dans le banc de registres 
 	lc3 <= '0' when p4OP = x"08" else '1'; --lecture pour STORE, les autres ecrivent
+
+	--aleas
+	p1WR <= '1' when p1OP = x"06" or p1OP = x"07" else '0'; --lecture dans le banc de registres pour tout le monde sauf AFC et LOAD
+	p2WR <= '0' when p2OP = x"08" else '1'; --lecture pour STORE, ecriture pour tout le monde dans le banc de registres
+	p3WR <= '0' when p2OP = x"08" else '1'; --lecture pour STORE, ecriture pour tout le monde
+	
+	alea <= '1' when 
+	((p1WR = '0' and p2WR = '1' and (p2A = p1B or p2A = p1C)) or
+	(p1WR = '0' and p3WR = '1' and (p3A = p1B or p3A = p1C)))
+	else '0';
 
 end Behavioral;
 

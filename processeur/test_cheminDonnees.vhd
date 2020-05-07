@@ -99,7 +99,7 @@ BEGIN
 		
 		AddrInstr <= x"03";
 
-      wait for wait_time;
+      wait for wait_time*2;
 		
 		AddrInstr <= x"04";
 
