@@ -2,9 +2,9 @@
 -- Company: 
 -- Engineer: 
 -- 
--- Create Date:    12:36:01 04/26/2020 
+-- Create Date:    11:17:39 03/26/2020 
 -- Design Name: 
--- Module Name:    memoireDonnees - Behavioral 
+-- Module Name:    compteur - Behavioral 
 -- Project Name: 
 -- Target Devices: 
 -- Tool versions: 
@@ -19,6 +19,7 @@
 ----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.std_logic_unsigned.all;
 
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
@@ -29,37 +30,39 @@ use IEEE.NUMERIC_STD.ALL;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
-entity memoireDonnees is
-    Port ( Addr : in  STD_LOGIC_VECTOR (7 downto 0);
-           E : in  STD_LOGIC_VECTOR (7 downto 0);
-           RW : in  STD_LOGIC; --1=lecture, 0=ecriture
-           RST : in  STD_LOGIC;
-           CLK : in  STD_LOGIC;
-           S : out  STD_LOGIC_VECTOR (7 downto 0));
-end memoireDonnees;
+entity compteur is
+	Port ( CLK : in  STD_LOGIC;
+		EN : in  STD_LOGIC; --actif a 0
+		SENS : in  STD_LOGIC; --1 augmente, 0 diminue
+		RST : in  STD_LOGIC; --actif a 0
+		Alea : in STD_LOGIC;
+		Dout : out  STD_LOGIC_VECTOR (7 downto 0));
+end compteur;
 
-architecture Behavioral of memoireDonnees is
+architecture Behavioral of compteur is
 
-type mem is array (integer range 255 downto 0) of STD_LOGIC_VECTOR(7 downto 0);
-signal memoire : mem;
+    signal AUX : STD_LOGIC_VECTOR (7 downto 0);
 
 begin
 	process(CLK)
 	begin
-		if falling_edge(CLK) then			
+		if rising_edge(CLK) then
 			if RST='0' then
-				memoire <= (others=>(others=>'0'));
+				AUX <= x"00";
 			else
-				if RW='0' then --ecriture
-					memoire(to_integer(unsigned(Addr))) <= E;
-					S <= x"00";
-				else --lecture
-					S <= memoire(to_integer(unsigned(Addr)));
-				end if;				
+				if EN='0' then
+					if SENS='1' then
+						AUX <= AUX + 1;
+						if Alea = '1' then
+							AUX <= AUX - 1;
+						end if;
+						Dout <= AUX;
+					else
+						AUX <= AUX - 1;
+					end if;
+				end if;    
 			end if;
 		end if;
 	end process;
-
-
+    
 end Behavioral;
-

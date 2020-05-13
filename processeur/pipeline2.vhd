@@ -51,7 +51,7 @@ begin
 			Aout <= Ain;
 			OPout <= OPin;
 			Bout <= Bin;
-			Cout <= Cin;
+			Cout <= Cin;		
 		end if;
 	end process;
 		

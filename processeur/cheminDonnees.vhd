@@ -31,8 +31,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 entity cheminDonnees is
     Port ( CLK : in  STD_LOGIC;
-           RST : in  STD_LOGIC;
-			  AddrInstr : in  STD_LOGIC_VECTOR (7 downto 0));
+           RST : in  STD_LOGIC);
 end cheminDonnees;
 
 architecture Behavioral of cheminDonnees is
@@ -40,6 +39,15 @@ architecture Behavioral of cheminDonnees is
 		 Port ( Addr : in  STD_LOGIC_VECTOR (7 downto 0);
 				  CLK : in  STD_LOGIC;
 				  S : out  STD_LOGIC_VECTOR (31 downto 0));
+	end component;
+	
+	component compteur is
+		Port ( CLK : in  STD_LOGIC;
+			EN : in  STD_LOGIC; --actif a 0
+			SENS : in  STD_LOGIC; --1 augmente, 0 diminue
+			RST : in  STD_LOGIC; --actif a 0
+			Alea : in STD_LOGIC;
+			Dout : out  STD_LOGIC_VECTOR (7 downto 0));
 	end component;
 
 	component bancregistres is
@@ -77,7 +85,6 @@ architecture Behavioral of cheminDonnees is
 	component pipeline1 is
     Port ( CLK : in  STD_LOGIC;
 			  Instr : in  STD_LOGIC_VECTOR (31 downto 0);
-			  Alea : in STD_LOGIC;
            A : out  STD_LOGIC_VECTOR (7 downto 0);
            OP : out  STD_LOGIC_VECTOR (7 downto 0);
            B : out  STD_LOGIC_VECTOR (7 downto 0);
@@ -117,6 +124,9 @@ architecture Behavioral of cheminDonnees is
 	end component;	
 	
 	-- signaux intermediaires pour pouvoir mapper les differents composants
+	
+	--compteur
+	signal addInstr : STD_LOGIC_VECTOR (7 downto 0);
 
 	--memoire instructions
 	signal memInstrOut : STD_LOGIC_VECTOR (31 downto 0);
@@ -172,15 +182,22 @@ architecture Behavioral of cheminDonnees is
 	
 begin
 	--mappage des ports des composants
+	compt: compteur port map (
+		CLK => CLK,
+		EN => '0', --actif a 0
+		SENS => '1', --1 augmente, 0 diminue
+		RST => RST, --actif a 0
+		Alea => alea,
+		Dout => addInstr);	
+	
 	memInstructions: memoireInstructions port map (
-		Addr => AddrInstr, --test avec l'instruction 0
+		Addr => addInstr,
 		CLK => CLK,
 		S => memInstrOut);
 		
 	pipelineLIDI: pipeline1 port map (
 		CLK => CLK,
 		Instr => memInstrOut,
-		Alea => alea,
 		A => p1A,
 		OP => p1OP,
 		B => p1B,
@@ -264,11 +281,10 @@ begin
 	--aleas
 	p1WR <= '1' when p1OP = x"06" or p1OP = x"07" else '0'; --lecture dans le banc de registres pour tout le monde sauf AFC et LOAD
 	p2WR <= '0' when p2OP = x"08" else '1'; --lecture pour STORE, ecriture pour tout le monde dans le banc de registres
-	p3WR <= '0' when p2OP = x"08" else '1'; --lecture pour STORE, ecriture pour tout le monde
+	p3WR <= '0' when p3OP = x"08" else '1'; --lecture pour STORE, ecriture pour tout le monde
 	
-	alea <= '1' when 
-	((p1WR = '0' and p2WR = '1' and (p2A = p1B or p2A = p1C)) or
-	(p1WR = '0' and p3WR = '1' and (p3A = p1B or p3A = p1C)))
+	alea <= '1' when
+	((p1WR = '0' and p2WR = '1' and (p2A = p1B or p2A = p1C)) or (p1WR = '0' and p3WR = '1' and (p3A = p1B or p3A = p1C)))
 	else '0';
 
 end Behavioral;

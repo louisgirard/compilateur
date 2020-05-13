@@ -60,12 +60,11 @@ begin
 					elsif WAddr=B then
 						QB <= DATA;
 					end if;
-				else
-					QA <= registres(to_integer(unsigned(A)));
-					QB <= registres(to_integer(unsigned(B)));
 				end if;
 			end if;
 		end if;
+		QA <= registres(to_integer(unsigned(A)));
+		QB <= registres(to_integer(unsigned(B)));
 		for I in 0 to 15 loop
 			report "Registre " & integer'image(I) & ", valeur : " & integer'image(to_integer(unsigned(registres(I))));
 		end loop;
